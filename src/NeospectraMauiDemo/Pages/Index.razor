@@ -1,0 +1,57 @@
+﻿@page "/"
+@inject HomePageViewModel VM
+<h1>Scan Device via BLE!</h1>
+@{
+    var counter = 1;
+}
+<table class="table table-hovered table-bordered">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">ID</th>
+            <th scope="col">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if(VM.DeviceCandidates!=null)
+        @foreach (var device in VM.DeviceCandidates)
+        {
+            <tr>
+                <th scope="row">@counter++</th>
+                <td>@device.Name</td>
+                <td>@device.Id</td>
+                <td><button class="btn btn-primary" @onclick="()=>Connect(device)">Connect</button></td>
+                </tr>
+            }
+
+        else
+        {
+            <tr>
+                <td colspan="4">No Device</td>
+            </tr>
+        }
+
+    </tbody>
+</table>
+
+<button class="btn btn-primary" @onclick="ScanNearby" disabled="@VM.IsScanning">Scan Nearby Device</button>
+<button class="btn btn-success" @onclick="CheckBle" disabled="@VM.IsScanning">Check Bluetooth</button>
+@code{
+    async Task Connect(DeviceCandidate device)
+    {
+        var res = await VM.ConnectToDevice(device);
+        Debug.WriteLine($"connect: {res}");
+    }
+    async Task ScanNearby()
+    {
+        await VM.ScanNearbyDevicesAsyncCommand.ExecuteAsync(null);
+    }
+    async Task CheckBle()
+    {
+        await VM.CheckBluetoothAvailabilityAsyncCommand.ExecuteAsync(null);
+    }
+    protected override async Task OnInitializedAsync()
+    {
+    }
+}
