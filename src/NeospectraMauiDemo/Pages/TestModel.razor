@@ -1,0 +1,11 @@
+﻿@page "/test"
+<h3>TestModel</h3>
+<button class="btn btn-primary" @onclick="Test" >Test Model</button>
+
+@code {
+    async Task Test()
+    {
+        SSKEngine engine = new SSKEngine();
+        await engine.TestModel();
+    }
+}

@@ -54,12 +54,36 @@
       <None Remove="Resources\Fonts\fa-brands-400.ttf" />
       <None Remove="Resources\Fonts\fa_solid.ttf" />
       <None Remove="Resources\Fonts\OpenSans-Semibold.ttf" />
+      <None Remove="Resources\Raw\Bray1_P2O5.onnx" />
+      <None Remove="Resources\Raw\Ca.onnx" />
+      <None Remove="Resources\Raw\CLAY.onnx" />
+      <None Remove="Resources\Raw\C_N.onnx" />
+      <None Remove="Resources\Raw\HCl25_K2O.onnx" />
+      <None Remove="Resources\Raw\HCl25_P2O5.onnx" />
+      <None Remove="Resources\Raw\InputTest.csv" />
+      <None Remove="Resources\Raw\Jumlah.onnx" />
+      <None Remove="Resources\Raw\K.onnx" />
+      <None Remove="Resources\Raw\KB_adjusted.onnx" />
+      <None Remove="Resources\Raw\KJELDAHL_N.onnx" />
+      <None Remove="Resources\Raw\KTK.onnx" />
+      <None Remove="Resources\Raw\Mg.onnx" />
+      <None Remove="Resources\Raw\Morgan_K2O.onnx" />
+      <None Remove="Resources\Raw\Na.onnx" />
+      <None Remove="Resources\Raw\Olsen_P2O5.onnx" />
+      <None Remove="Resources\Raw\PH_H2O.onnx" />
+      <None Remove="Resources\Raw\PH_KCL.onnx" />
+      <None Remove="Resources\Raw\RetensiP.onnx" />
+      <None Remove="Resources\Raw\SAND.onnx" />
+      <None Remove="Resources\Raw\SILT.onnx" />
+      <None Remove="Resources\Raw\WBC.onnx" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.Maui" Version="5.1.0" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.0" />
+        <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0-rc.2.22430.11" />
+        <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.14.1" />
         <PackageReference Include="Plugin.BLE" Version="2.1.3" />
         <PackageReference Include="SkiaSharp" Version="2.88.3" />
     </ItemGroup>

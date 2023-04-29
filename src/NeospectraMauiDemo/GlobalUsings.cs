@@ -4,6 +4,8 @@ global using CommunityToolkit.Maui.Core;
 global using CommunityToolkit.Mvvm.ComponentModel;
 global using CommunityToolkit.Mvvm.Input;
 global using NeospectraMauiDemo.Models;
+global using NeospectraMauiDemo.Model;
+
 global using NeospectraMauiDemo.Pages;
 global using NeospectraMauiDemo.Views;
 global using NeospectraMauiDemo.Services;

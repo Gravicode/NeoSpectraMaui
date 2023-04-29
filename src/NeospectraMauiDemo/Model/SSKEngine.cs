@@ -11,11 +11,12 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Windows.AI.MachineLearning;
+//using Windows.AI.MachineLearning;
 using System.Diagnostics;
 using SensingKit.Core.Model;
 using SensingKit.Core;
 using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace NeospectraMauiDemo.Model
 {
@@ -140,7 +141,7 @@ namespace NeospectraMauiDemo.Model
                 if (inputFloat != null && inputFloat.Count == 154)
                 {
                     var inputF = PreProcessData(inputFloat);
-                    await DoInference2(CurrentIndex, inputF);
+                    //await DoInference2(CurrentIndex, inputF);
                 }
                 output.AcceptChanges();
                 return true;
@@ -154,14 +155,18 @@ namespace NeospectraMauiDemo.Model
         }
         public async Task<bool> TestModel()
         {
-            
+            CultureInfo ci = new CultureInfo("en-US");
             //use csv input
-            var FPath = System.IO.Path.Combine(
-           Windows.ApplicationModel.Package.Current.InstalledLocation.Path,
-           $"Assets\\{InputFileCsv}");
-            if (!File.Exists(FPath)) return false;
+            // var FPath = System.IO.Path.Combine(
+            //Windows.ApplicationModel.Package.Current.InstalledLocation.Path,
+            //$"Assets\\{InputFileCsv}");
+            using var stream = await FileSystem.OpenAppPackageFileAsync("InputTest.csv");
+            using var reader = new StreamReader(stream);
+
+            //var contents = reader.ReadToEnd();
+            //if (string.IsNullOrEmpty(contents)) return false;
             //CreateOutputTable();
-            var dt = ConvertCSVtoDataTable(FPath);
+            var dt = ConvertCSVtoDataTable2(reader);
             var index = 0;
             int MaxRow = 3;
             foreach (DataRow row in dt.Rows)
@@ -171,7 +176,7 @@ namespace NeospectraMauiDemo.Model
                 //get input
                 foreach (DataColumn dc in dt.Columns)
                 {
-                    var rowNum = float.Parse(dc.ColumnName);
+                    var rowNum = float.Parse(dc.ColumnName,ci);
                     if (rowNum < 2502 && rowNum >= 1350)
                     {
                         inputFloat.Add(Convert.ToSingle(row[dc.ColumnName]));
@@ -266,6 +271,7 @@ namespace NeospectraMauiDemo.Model
                 propertyInfo.SetValue(obj, value, null);
             }
         }
+        
         async Task DoInference2(int index, float[] inputData)
         {
 
@@ -281,154 +287,156 @@ namespace NeospectraMauiDemo.Model
                     float result = 0f;
                     switch (colName)
                     {
-                        case "Bray1_P2O5":
-                            {
-                                var model = await Bray1_P2O5Model.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new Bray1_P2O5Input() { serving_default_input_1200 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
-                            }
-                            break;
+                      
                         case "Ca":
                             {
                                 var model = await CaModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new CaInput() { serving_default_input_1500 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new CaInput() { serving_default_input_1500 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
+                            }
+                            break;
+                            
+                        case "Bray1_P2O5":
+                            {
+                                var model = await Bray1_P2O5Model.LoadModelAsync(file);
+                                //var valout = await model.EvaluateAsync(new Bray1_P2O5Input() { serving_default_input_1200 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "CLAY":
                             {
                                 var model = await CLAYModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new CLAYInput() { serving_default_input_300 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new CLAYInput() { serving_default_input_300 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "C_N":
                             {
                                 var model = await C_NModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new C_NInput() { serving_default_input_800 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new C_NInput() { serving_default_input_800 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "HCl25_K2O":
                             {
                                 var model = await HCl25_K2OModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new HCl25_K2OInput() { serving_default_input_1000 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new HCl25_K2OInput() { serving_default_input_1000 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "HCl25_P2O5":
                             {
                                 var model = await HCl25_P2O5Model.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new HCl25_P2O5Input() { serving_default_input_900 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new HCl25_P2O5Input() { serving_default_input_900 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "Jumlah":
                             {
                                 var model = await JumlahModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new JumlahInput() { serving_default_input_1900 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new JumlahInput() { serving_default_input_1900 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "K":
                             {
                                 var model = await KModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new KInput() { serving_default_input_1700 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new KInput() { serving_default_input_1700 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "KB_adjusted":
                             {
                                 var model = await KB_adjustedModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new KB_adjustedInput() { serving_default_input_2100 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new KB_adjustedInput() { serving_default_input_2100 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "Mg":
                             {
                                 var model = await MgModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new MgInput() { serving_default_input_1600 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new MgInput() { serving_default_input_1600 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "KJELDAHL_N":
                             {
                                 var model = await KJELDAHL_NModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new KJELDAHL_NInput() { serving_default_input_700 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new KJELDAHL_NInput() { serving_default_input_700 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "KTK":
                             {
                                 var model = await KTKModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new KTKInput() { serving_default_input_2000 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new KTKInput() { serving_default_input_2000 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "Morgan_K2O":
                             {
                                 var model = await Morgan_K2OModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new Morgan_K2OInput() { serving_default_input_1300 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new Morgan_K2OInput() { serving_default_input_1300 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "Na":
                             {
                                 var model = await NaModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new NaInput() { serving_default_input_1800 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new NaInput() { serving_default_input_1800 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "Olsen_P2O5":
                             {
                                 var model = await Olsen_P2O5Model.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new Olsen_P2O5Input() { serving_default_input_1100 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new Olsen_P2O5Input() { serving_default_input_1100 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "PH_H2O":
                             {
                                 var model = await PH_H2OModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new PH_H2OInput() { serving_default_input_400 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new PH_H2OInput() { serving_default_input_400 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "PH_KCL":
                             {
                                 var model = await PH_KCLModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new PH_KCLInput() { serving_default_input_500 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new PH_KCLInput() { serving_default_input_500 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "RetensiP":
                             {
                                 var model = await RetensiPModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new RetensiPInput() { serving_default_input_1400 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new RetensiPInput() { serving_default_input_1400 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "SAND":
                             {
                                 var model = await SANDModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new SANDInput() { serving_default_input_100 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new SANDInput() { serving_default_input_100 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "SILT":
                             {
                                 var model = await SILTModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new SILTInput() { serving_default_input_200 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new SILTInput() { serving_default_input_200 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
                         case "WBC":
                             {
                                 var model = await WBCModel.LoadModelAsync(file);
-                                var valout = await model.EvaluateAsync(new WBCInput() { serving_default_input_600 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
-                                result = await model.ProcessOutputAsync(valout);
+                                //var valout = await model.EvaluateAsync(new WBCInput() { serving_default_input_600 = TensorFloat.CreateFromArray(new long[] { -1, 154 }, inputData) });
+                                result = await model.ProcessOutputAsync(inputData);
                             }
                             break;
-
+                            
                     }
 
                     dr[colName] = result;
@@ -452,6 +460,7 @@ namespace NeospectraMauiDemo.Model
 
 
         }
+        /*
         static void DoInference(int index, float[] inputData)
         {
             var dir = new DirectoryInfo(WorkingDir);
@@ -508,6 +517,7 @@ namespace NeospectraMauiDemo.Model
 
 
         }
+        */
         #region Recommendation
         const double ureaConst = 2.22;
         const double sp36Const = 2.77;
@@ -574,10 +584,32 @@ namespace NeospectraMauiDemo.Model
         }
         #endregion
         #endregion
+        
         #region preprocess
         public static DataTable ConvertCSVtoDataTable(string strFilePath)
         {
             StreamReader sr = new StreamReader(strFilePath);
+            string[] headers = sr.ReadLine().Split(',');
+            DataTable dt = new DataTable();
+            foreach (string header in headers)
+            {
+                dt.Columns.Add(header);
+            }
+            while (!sr.EndOfStream)
+            {
+                string[] rows = Regex.Split(sr.ReadLine(), ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+                DataRow dr = dt.NewRow();
+                for (int i = 0; i < headers.Length; i++)
+                {
+                    dr[i] = rows[i];
+                }
+                dt.Rows.Add(dr);
+            }
+            return dt;
+        }
+        public static DataTable ConvertCSVtoDataTable2(StreamReader sr)
+        {
+            //StreamReader sr = new StreamReader(strFilePath);
             string[] headers = sr.ReadLine().Split(',');
             DataTable dt = new DataTable();
             foreach (string header in headers)
