@@ -327,7 +327,12 @@
 
                 isWaitingForBackGroundReading = false;
                 MethodsFactory.LogMessage(TAG, "BACKGROUND SCAN IS COMPLETE");
+                await InvokeAsync(async () =>
+                {
                 await ShowDialog("BACKGROUND SCAN IS COMPLETE");
+                //StateHasChanged());
+               });
+
 
             }
             return;
@@ -398,8 +403,12 @@
                 count = 1;
                 //Toast.makeText(mContext, "Scan is complete", Toast.LENGTH_LONG).show();
                 MethodsFactory.LogMessage(TAG, "SCAN IS COMPLETE");
-
-                await ShowDialog("SCAN IS COMPLETE");
+                await InvokeAsync(async () =>
+                {
+                    await ShowDialog("SCAN IS COMPLETE");
+                    //StateHasChanged());
+                });
+               
                 //do inference
                 DoInference();
                 CommonVariables.setScanningState(2);
