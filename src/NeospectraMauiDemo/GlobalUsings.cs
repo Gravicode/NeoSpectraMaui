@@ -5,6 +5,8 @@ global using CommunityToolkit.Mvvm.ComponentModel;
 global using CommunityToolkit.Mvvm.Input;
 global using NeospectraMauiDemo.Models;
 global using NeospectraMauiDemo.Model;
+global using SensingKit.Core.Model;
+global using NeospectraMauiDemo.Helpers;
 
 global using NeospectraMauiDemo.Pages;
 global using NeospectraMauiDemo.Views;

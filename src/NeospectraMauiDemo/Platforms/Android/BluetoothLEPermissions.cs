@@ -9,8 +9,7 @@ public class BluetoothLEPermissions : Permissions.BasePlatformPermission
             return new List<(string androidPermission, bool isRuntime)>
             {
 
-                (Android.Manifest.Permission.Bluetooth, true),
-                (Android.Manifest.Permission.BluetoothAdvertise, true),
+               (Android.Manifest.Permission.Bluetooth, true),
                 (Android.Manifest.Permission.BluetoothAdmin, true),
                 (Android.Manifest.Permission.BluetoothScan, true),
                 (Android.Manifest.Permission.BluetoothConnect, true),

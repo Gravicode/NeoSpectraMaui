@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using NeospectraMauiDemo.Data;
-
+using Blazored.Toast;
 namespace NeospectraMauiDemo
 {
     public static class MauiProgram
@@ -27,6 +27,7 @@ namespace NeospectraMauiDemo
                     fonts.AddFont("fa-brands-400.ttf", "FontAwesomeBrands");
                 });
 
+            builder.Services.AddBlazoredToast();
             builder.Services.AddSingleton<BluetoothLEService>();
 
             builder.Services.AddSingleton<IConnectivity>(Connectivity.Current);

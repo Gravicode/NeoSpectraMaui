@@ -1,0 +1,514 @@
+﻿@page "/scan-page"
+@inject BluetoothLEService bluetoothLEService
+@inject IJSRuntime JS
+@inject IToastService Toast
+
+<h3>Scan Page</h3>
+
+<b>Spectrum</b>
+<p>@TxtSpectrum</p>
+<div>
+    <button class="btn btn-primary" @onclick="BackgroundScanClick" >Background Scan</button>
+    <button class="btn btn-success" @onclick="SensorScanClick" >Scan Material</button>
+    <button class="btn btn-warning" @onclick="ClearMemoryClick">Clear Memory</button>
+    <button class="btn btn-info" @onclick="InferenceClick" >Inference Test</button>
+</div>
+<ConfirmDialog @ref="confirm1" ></ConfirmDialog>
+@code {
+    ConfirmDialog confirm1;
+    ObservableCollection<ChartItem> ChartItems = new ObservableCollection<ChartItem>();
+    ObservableCollection<UnsurModel> DataItems = new ObservableCollection<UnsurModel>();
+    ObservableCollection<FertilizerRecommendation> RecommendationItems = new ObservableCollection<FertilizerRecommendation>();
+    //IEnumerable<dynamic> ResultTable { get; set; }
+    SSKEngine engine;
+    string TxtSpectrum;
+    int scanTime = 2;
+    int backgroundScanTime = 2;
+    IDevice bluetoothLeDevice = null;
+    ScanPresenter scanPresenter = null;
+
+    bool isStopEnabled = false;
+    bool isScanBG = false;
+    bool isWaitingForBackGroundReading = false;
+    bool isWaitingForSensorReading = false;
+    int notifications_count = 0;
+    double numberOfRuns = 1;
+    int count = 1;
+    private double maxValue = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+
+
+        loadPreferences();
+        if (GlobalVariables.bluetoothAPI == null)
+        {
+            GlobalVariables.bluetoothAPI = new SWS_P3API(bluetoothLEService);
+
+        }
+        if (engine == null) engine = new SSKEngine();
+        LoadData();
+        TxtSpectrum = $"Spectral Length ({SSKEngine.WaveFreq.First()} nm - {SSKEngine.WaveFreq.Last()} nm)";
+        if (GlobalVariables.bluetoothAPI != null)
+        {
+            GlobalVariables.bluetoothAPI.getmP3ConnectionServices().BroadcastReceived += ScanPage_BroadcastReceived;
+        }
+    }
+
+    #region UI Code
+
+
+    void LoadData()
+    {
+        DataItems.Clear();
+        var items = engine.GetOutput();
+        items.ForEach(x =>
+        {
+            DataItems.Add(x);
+        });
+        //dataGrid.ItemsSource = DataItems;
+
+        RecommendationItems.Clear();
+        var items2 = engine.GetRecommendations();
+        items2.ForEach(x =>
+        {
+            RecommendationItems.Add(x);
+        });
+        //dataGrid2.ItemsSource = RecommendationItems;
+    }
+    async Task ShowDialog(string Message)
+    {
+        confirm1.Message = Message;
+        await JS.InvokeVoidAsync("ShowModal", "confirmModal");
+
+    }
+
+    void loadPreferences()
+    {
+
+
+        //Preferences.Get("optical_gain_settings"] == null ? "Default" : Convert.ToString(Preferences.Get("optical_gain_settings"]);
+
+        GlobalVariables.gRunMode = Preferences.Get("run_mode", GlobalVariables.runMode.Single_Mode); //: Convert.ToString(Preferences.Get("run_mode"]);
+                                                                                                     //preferences.getString("run_mode", GlobalVariables.runMode.Single_Mode.toString());
+        GlobalVariables.gIsInterpolationEnabled = Preferences.Get("linear_interpolation_switch", false); //: Convert.ToBoolean(Preferences.Get("linear_interpolation_switch"]);
+                                                                                                         //preferences.getBoolean("linear_interpolation_switch", false);
+        GlobalVariables.gInterpolationPoints = Preferences.Get("data_points", GlobalVariables.pointsCount.points_257);// : Convert.ToString(Preferences.Get("data_points"]);
+                                                                                                                      //preferences.getString("data_points", GlobalVariables.pointsCount.points_257.toString());
+        GlobalVariables.gIsFftEnabled = Preferences.Get("fft_settings_switch", false);// : Convert.ToBoolean(Preferences.Get("fft_settings_switch"]);
+                                                                                      //preferences.getBoolean("fft_settings_switch", false);
+        GlobalVariables.gApodizationFunction = Preferences.Get("apodization_function", GlobalVariables.apodization.Boxcar);// : Convert.ToString(Preferences.Get("apodization_function"]);
+                                                                                                                           //preferences.getString("apodization_function", GlobalVariables.apodization.Boxcar.toString());
+        GlobalVariables.gFftPoints = Preferences.Get("fft_points", GlobalVariables.zeroPadding.points_32k);//: Convert.ToString(Preferences.Get("fft_points"]);
+                                                                                                           //preferences.getString("fft_points", GlobalVariables.zeroPadding.points_8k.toString());
+        GlobalVariables.gOpticalGainSettings = Preferences.Get("optical_gain_settings", "Default");// : Convert.ToString(Preferences.Get("optical_gain_settings"]);
+                                                                                                   //preferences.getString("optical_gain_settings", "Default");
+        GlobalVariables.gOpticalGainValue = Preferences.Get(GlobalVariables.gOpticalGainSettings, 0);//: Convert.ToInt32(Preferences.Get(gOpticalGainSettings]);
+                                                                                                     //preferences.getInt(gOpticalGainSettings, 0);
+        GlobalVariables.gCorrectionMode = Preferences.Get("wavelength_correction", GlobalVariables.wavelengthCorrection.Self_Calibration );//: Convert.ToString(Preferences.Get("wavelength_correction"]);
+                                                                                                                                          //preferences.getString("wavelength_correction", GlobalVariables.wavelengthCorrection.Self_Calibration.toString());
+
+    }
+
+    private void ScanPage_BroadcastReceived(object sender, SWS_P3ConnectionServices.BroadcastEventArgs e)
+    {
+        var TAG = nameof(ScanPage);
+        var intent = e.iGotData;
+        var intentName = Convert.ToString(intent["iName"]);
+        switch (intentName)
+        {
+            //Case data is received successfully
+            case "sensorNotification_data":
+                gotSensorReading(intent);
+                MethodsFactory.LogMessage(TAG, "Intent Received:\n" +
+                        "Name: " + Convert.ToString(intent["iName"]) + "\n" +
+                        "Success: " + Convert.ToBoolean(intent["isNotificationSuccess"]) + "\n" +
+                        "Reason: " + Convert.ToString(intent["reason"]) + "\n" +
+                        "Error: " + Convert.ToString(intent.ContainsKey("err") ? intent["err"] : string.Empty) + "\n" +
+                        "data : " + string.Join(',', (double[])intent["data"]) + "\n");
+                break;
+            // Case sensor notification with failure
+            case "sensorNotification_failure":
+                gotSensorReading(intent);
+                MethodsFactory.LogMessage(TAG, "Intent Received:\n" +
+                        "Name: " + Convert.ToString(intent["iName"]) + "\n" +
+                        "Success: " + Convert.ToBoolean(intent["isNotificationSuccess"]) + "\n" +
+                        "Reason: " + Convert.ToString(intent["reason"]) + "\n" +
+                        "Error: " + Convert.ToString(intent["err"]) + "\n" +
+                        "data : " + Convert.ToInt32(intent["data"]) + "\n");
+                int errorCode = Convert.ToInt32(intent["data"]);
+
+                // show progress bar
+
+                // set button enable or disable
+                CommonVariables.setScanningState(0);
+
+                notifications_count = 0;
+                isWaitingForBackGroundReading = false;
+                isWaitingForSensorReading = false;
+                var xmdock = "Error " + (0x000000FF & errorCode) + " occurred during measurement!";
+                Toast.ShowError(xmdock);
+                //showAlertMessage(mContext, "Error", "Error " + String.valueOf(0x000000FF & errorCode) + " occurred during measurement!");
+                break;
+            case "sensorWriting":
+
+                break;
+            //case "OperationDone":
+            //isWaitingForBackGroundReading = false;
+            //isScanBG = false;
+            //break;
+            //Case device is disconnected
+            case "Disconnection_Notification":
+                //endActivity();
+                break;
+
+            default:
+                MethodsFactory.LogMessage(TAG + "intent", $"Got unknown broadcast intent: {intentName}");
+                break;
+        }
+    }
+    private void gotSensorReading(Dictionary<string, object> intent)
+    {
+        var TAG = nameof(ScanPage);
+        bool isNotificationSuccessful = Convert.ToBoolean(intent["isNotificationSuccess"]);
+        var notificationReason = Convert.ToString(intent["reason"]);  //intent.getStringExtra("reason");
+        var errorMessage = Convert.ToString(intent.ContainsKey("err") ? intent["err"] : string.Empty);//intent.getStringExtra("err");
+
+        /* If the notification is unsuccessful */
+        if (!isNotificationSuccessful)
+        {
+
+
+            MethodsFactory.LogMessage(notificationReason, errorMessage);
+            return;
+        }
+
+        /* If an error occured */
+        if (!notificationReason.Equals("gotData"))
+        {
+
+            CommonVariables.setScanningState(1);
+            //SetView();
+            notifications_count = 0;
+            return;
+        }
+
+        // Number of the received notifications
+        notifications_count++;
+
+        if (isScanBG)
+        {
+            if ((notifications_count % 3) == 0)
+            {
+
+                CommonVariables.setScanningState(1);
+                //SetView();
+
+                isWaitingForBackGroundReading = false;
+                MethodsFactory.LogMessage(TAG, "BACKGROUND SCAN IS COMPLETE");
+                ShowDialog("BACKGROUND SCAN IS COMPLETE");
+
+            }
+            return;
+        }
+
+        // Get readings
+        double[] reading = (double[])intent["data"]; //intent.getDoubleArrayExtra("data");
+
+        if (reading == null)
+        {
+            MethodsFactory.LogMessage(TAG, "Reading is NULL.");
+
+            CommonVariables.setScanningState(0);
+            //SetView();
+
+            notifications_count = 0;
+            return;
+        }
+
+        // The array constructed from two arrays have the same length, Y, then X.
+        int middleOfArray = reading.Length / 2;
+        double[] x_reading = new double[middleOfArray],
+                y_reading = new double[middleOfArray];
+        // split the main array to two arrays, Y & X
+        for (int i = 0; i < middleOfArray; i++)
+        {
+            //Added this fix for the inconsistency in size of received data
+            y_reading[i] = reading[i];
+            x_reading[i] = reading[middleOfArray + i];
+        }
+
+        // Prepare the data to get ArrayRealVector with length 314 item,
+        // and set its value to the singleton sensor reading model.
+        if ((y_reading.Length > 0) && (x_reading.Length > 0))
+        {
+            dbReading newReading = new dbReading();
+            newReading.setReading(y_reading, x_reading);
+            // Add the taken read to global ArrayList which holds all the taken readings
+            GlobalVariables.gAllSpectra.Add(newReading);
+
+            CommonVariables.setScanningState(1);
+            //SetView();
+
+            isWaitingForSensorReading = false;
+
+            double numberOfRuns = this.numberOfRuns;
+
+            // Enable Stop action button in case there are a multiple number of runs
+            if (count < numberOfRuns)
+            {
+                if (isStopEnabled)
+                {
+                    count = 1;
+                    //tv_progressCount.setEnabled(false);
+                    //tv_progressCount.setText("");
+                    //pbProgressBar.setVisibility(View.INVISIBLE);
+                    isStopEnabled = false;
+                    return;
+                }
+                count++;
+
+                // Press scan button again as it is a continues mode
+                SensorScanClick();
+            }
+            else// Handle only one run
+            {
+
+                count = 1;
+                //Toast.makeText(mContext, "Scan is complete", Toast.LENGTH_LONG).show();
+                MethodsFactory.LogMessage(TAG, "SCAN IS COMPLETE");
+
+                ShowDialog("SCAN IS COMPLETE");
+                //do inference
+                DoInference();
+                CommonVariables.setScanningState(2);
+                //SetView();
+
+                //displayGraph();
+            }
+        }
+
+        MethodsFactory.LogMessage(TAG, "Sensor Reading Length = " + reading.Length);
+
+    }
+
+    async void DoInference()
+    {
+        var input = getReflectance();
+        List<float> inputFloat = new List<float>();
+        for (int i = 0; i < input.Length; i++)
+        {
+            inputFloat.Add((float)input[i]);
+        }
+
+        var res = await engine.ExecuteModel(inputFloat);
+
+        //UI code here
+
+
+        LoadData();
+
+
+
+    }
+
+    /*
+
+    protected override async void OnNavigatedFrom(NavigationEventArgs e)
+        {
+        var success = await ClearBluetoothLEDeviceAsync();
+            if (!success)
+            {
+            rootPage.NotifyUser("Error: Unable to reset app state", NotifyType.ErrorMessage);
+        }
+        if (GlobalVariables.bluetoothAPI != null)
+            {
+            GlobalVariables.bluetoothAPI.getmP3ConnectionServices().BroadcastReceived -= ScanPage_BroadcastReceived;
+    }
+    }*/
+    #endregion
+
+    #region Enumerating Services
+    private async Task<bool> ClearBluetoothLEDeviceAsync()
+    {
+
+        bluetoothLeDevice?.Dispose();
+        bluetoothLeDevice = null;
+        return true;
+    }
+
+    async Task BackgroundScanClick()
+    {
+        isScanBG = true;
+        backgroundScanTime = scanTime;
+        CommonVariables.setScanningState(99);
+
+        if (scanPresenter == null)
+        {
+            scanPresenter = new ScanPresenter();
+        }
+        // Don't complete the process if the device not connected
+        if (GlobalVariables.bluetoothAPI == null || !GlobalVariables.bluetoothAPI.isDeviceConnected())
+        {
+            await ShowDialog("Please! Ensure that you have a connected device firstly");
+            return;
+        }
+        else
+        {
+            isWaitingForBackGroundReading = true;
+            scanPresenter.requestBackgroundReading(scanTime);
+        }
+    }
+    async Task InferenceClick()
+    {
+
+        var res = await engine.TestModel();
+    }
+    async Task ClearMemoryClick()
+    {
+        if (GlobalVariables.bluetoothAPI != null)
+            GlobalVariables.bluetoothAPI.sendClearMemoryRequest();
+        else
+        {
+            Toast.ShowError("Failed to connect to device.");
+        }
+    }
+    async Task SensorScanClick()
+    {
+        var TAG = nameof(ScanPage);
+        CommonVariables.setScanningState(99);
+        if (backgroundScanTime < scanTime)
+        {
+            MethodsFactory.LogMessage(TAG, "Material Scan time is greater than reference material scan time ");
+            return;
+        }
+        isScanBG = false;
+        if (numberOfRuns > 1)
+            if (numberOfRuns > 1)
+            {
+                // handle loading when number of runs more than 1
+            }
+        if (count == 1)
+        {
+            // handle loading when count more than 1
+        }
+        if (isWaitingForSensorReading)
+        {
+            MethodsFactory.LogMessage(TAG, "Still waiting for sensor reading ... ");
+            return;
+        }
+        isWaitingForSensorReading = true;
+        if (scanPresenter == null)
+        {
+            scanPresenter = new ScanPresenter();
+        }
+        // Don't complete the process if the device not connected
+        if (GlobalVariables.bluetoothAPI == null || !GlobalVariables.bluetoothAPI.isDeviceConnected())
+        {
+            await ShowDialog("Please! Ensure that you have a connected device firstly");
+            return;
+        }
+        else
+        {
+            scanPresenter.requestSensorReading(scanTime);
+        }
+    }
+
+   
+
+    public double[] getReflectance()
+    {
+        int gsize = GlobalVariables.gAllSpectra.Count;
+
+        dbReading sensorReading = GlobalVariables.gAllSpectra[gsize - 1];
+        List<Driver.DataPoint> dataPoints = new List<Driver.DataPoint>();
+        List<double> dataY = new List<double>();
+        if (sensorReading != null)
+        {
+            if ((sensorReading.getXReading().Length != 0) && (sensorReading.getYReading().Length != 0))
+            {
+                double[] xVals = sensorReading.getXReading();
+                double[] yVals = sensorReading.getYReading();
+                List<double> xData = new List<double>();
+                List<double> yData = new List<double>();
+
+                for (int ax = xVals.Length - 1; ax >= 0; --ax)
+                {
+                    double xx = 1e7 / xVals[ax];
+                    double yy = yVals[ax] * 100;
+                    xData.Add(xx);
+                    yData.Add(yy);
+                }
+                /*
+                SplineInterpolator2 scaler = SplineInterpolator2.createMonotoneCubicSpline(xData, yData);
+                */
+                //var scaler = new SplineInterpolation(xData.ToArray(), yData.ToArray());
+                var scaler = new MonotoneCubicSplineInterpolation();
+                scaler.createMonotoneCubicSpline(xData, yData);
+                /*
+                for (int ax = 2500; ax > 1350; ax -= 5)
+                {
+                    double x = ax;
+                    double y = scaler.Interpolate(x);
+                    Console.WriteLine(x + "," + y);
+                    dataPoints.Add(new DataPoint(x, y));
+                    dataY.Add(y);
+                }*/
+                foreach (var x in SSKEngine.WaveFreq)
+                {
+
+                    double y = scaler.Interpolate(x);
+                    Debug.WriteLine(x + "," + y);
+                    dataPoints.Add(new Driver.DataPoint(x, y));
+                    dataY.Add(y);
+
+                }
+                ShowChart(dataPoints);
+                var dataArrY = dataY.ToArray();
+                //double[] finalData = Stream.of(dataArrY).mapToDouble(Double::doubleValue).toArray();
+
+                return dataArrY;
+            }
+        }
+
+        return null;
+    }
+    #endregion
+
+    #region chart
+    async void ShowChart(List<Driver.DataPoint> datas)
+    {
+        
+            ChartItems = new ObservableCollection<ChartItem>();
+            foreach (var item in datas)
+            {
+                ChartItems.Add(new ChartItem() { Ax = item.X.ToString(), Ay = item.Y });
+            }
+            /*
+            var series1 = (LineSeries)LineChart1.Series[0];
+            series1.ItemsSource = ChartItems;
+            series1.DependentRangeAxis =
+                    new LinearAxis
+                        {
+                            Minimum = ChartItems.Min(x => x.Ay) - 20,
+                            Maximum = ChartItems.Max(x => x.Ay) + 20,
+                            Orientation = AxisOrientation.Y,
+                            Interval = 20,
+                            ShowGridLines = true
+                        };
+            series1.IndependentAxis =
+                                      new WinRTXamlToolkit.Controls.DataVisualization.Charting.CategoryAxis
+                                          {
+                                              FontSize = 8,
+                                              Orientation = AxisOrientation.X,
+                                              Height = 20
+                                          };
+         
+        */
+
+    }
+    #endregion
+
+    
+}

@@ -1,8 +1,11 @@
-﻿namespace NeospectraMauiDemo.ViewModels;
+﻿using Microsoft.AspNetCore.Components;
+
+namespace NeospectraMauiDemo.ViewModels;
 
 public partial class HomePageViewModel : BaseViewModel
 {
     BluetoothLEService BluetoothLEService;
+    NavigationManager NavMgr;
 
     public ObservableCollection<DeviceCandidate> DeviceCandidates { get; } = new();
 
@@ -10,8 +13,9 @@ public partial class HomePageViewModel : BaseViewModel
     public IAsyncRelayCommand ScanNearbyDevicesAsyncCommand { get; }
     public IAsyncRelayCommand CheckBluetoothAvailabilityAsyncCommand { get; }
 
-    public HomePageViewModel(BluetoothLEService bluetoothLEService)
+    public HomePageViewModel(BluetoothLEService bluetoothLEService, NavigationManager NavMgr)
     {
+        this.NavMgr = NavMgr;
         Title = $"Scan and select device";
 
         BluetoothLEService = bluetoothLEService;
@@ -23,11 +27,27 @@ public partial class HomePageViewModel : BaseViewModel
 
         GlobalVariables.bluetoothAPI = new SWS_P3API(bluetoothLEService);
     }
-    public async Task<bool> ConnectToDevice(DeviceCandidate device)
+    public async Task<bool> ConnectToDevice(DeviceCandidate deviceCandidate)
     {
-        
-        var res = await GlobalVariables.bluetoothAPI.connectToDevice(device);
+        if (IsScanning)
+        {
+            await BluetoothLEService.ShowToastAsync($"Bluetooth adapter is scanning. Try again.");
+            return false;
+        }
+
+        if (deviceCandidate == null)
+        {
+            return false;
+        }
+
+        BluetoothLEService.NewDeviceCandidateFromHomePage = deviceCandidate;
+
+        Title = $"{deviceCandidate.Name}";
+
+       
+        var res = await GlobalVariables.bluetoothAPI.connectToDevice(deviceCandidate);
         return res;
+        //await Shell.Current.GoToAsync("//HeartRatePage", true);
     }
     async Task GoToHeartRatePageAsync(DeviceCandidate deviceCandidate)
     {
@@ -45,8 +65,8 @@ public partial class HomePageViewModel : BaseViewModel
         BluetoothLEService.NewDeviceCandidateFromHomePage = deviceCandidate;
 
         Title = $"{deviceCandidate.Name}";
-
-        await Shell.Current.GoToAsync("//HeartRatePage", true);
+       
+        //await Shell.Current.GoToAsync("//HeartRatePage", true);
     }
 
     async Task ScanDevicesAsync()

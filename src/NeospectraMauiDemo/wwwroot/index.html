@@ -21,9 +21,18 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
-
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"
+            integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
+            crossorigin="anonymous"></script>
     <script src="_framework/blazor.webview.js" autostart="false"></script>
-
+    <script>
+        function ShowModal(modalId) {
+            $('#' + modalId).modal('show');
+        }
+        function CloseModal(modalId) {
+            $('#' + modalId).modal('hide');
+        }
+    </script>
 </body>
 
 </html>

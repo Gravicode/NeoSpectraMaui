@@ -28,7 +28,7 @@ public class BluetoothLEService
 
         try
         {
-            IReadOnlyList<IDevice> systemDevices = Adapter.GetSystemConnectedOrPairedDevices(HeartRateUuids.HeartRateServiceUuids);
+            IReadOnlyList<IDevice> systemDevices = Adapter.GetSystemConnectedOrPairedDevices();
             foreach (var systemDevice in systemDevices)
             {
                 DeviceCandidate deviceCandidate = DeviceCandidateList.FirstOrDefault(d => d.Id == systemDevice.Id);
@@ -42,14 +42,14 @@ public class BluetoothLEService
                     await ShowToastAsync($"Found {systemDevice.State.ToString().ToLower()} device {systemDevice.Name}.");
                 }
             }
-            await Adapter.StartScanningForDevicesAsync(HeartRateUuids.HeartRateServiceUuids);
+            await Adapter.StartScanningForDevicesAsync();
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Unable to scan nearby Bluetooth LE devices: {ex.Message}.");
             await Shell.Current.DisplayAlert($"Unable to scan nearby Bluetooth LE devices", $"{ex.Message}.", "OK");
         }
-
+        
         return DeviceCandidateList;
     }
 
@@ -135,6 +135,14 @@ public class BluetoothLEService
     #region BluetoothPermissions
     public async Task<PermissionStatus> CheckBluetoothPermissions()
     {
+     
+        
+        var ble = CrossBluetoothLE.Current;
+        var adapter = CrossBluetoothLE.Current.Adapter;
+        var state = ble.State;
+        return state == BluetoothState.On ? PermissionStatus.Granted : PermissionStatus.Denied;
+        /*
+        
         PermissionStatus status = PermissionStatus.Unknown;
         try
         {
@@ -146,6 +154,7 @@ public class BluetoothLEService
             await Shell.Current.DisplayAlert($"Unable to check Bluetooth LE permissions", $"{ex.Message}.", "OK");
         }
         return status;
+        */
     }
 
     public async Task<PermissionStatus> RequestBluetoothPermissions()
@@ -163,6 +172,7 @@ public class BluetoothLEService
         return status;
     }
     #endregion BluetoothPermissions
+
 #elif IOS
 #elif WINDOWS
 #endif

@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject HomePageViewModel VM
+@inject NavigationManager NavMgr
 <h1>Scan Device via BLE!</h1>
 @{
     var counter = 1;
@@ -41,7 +42,10 @@
     async Task Connect(DeviceCandidate device)
     {
         var res = await VM.ConnectToDevice(device);
-        Debug.WriteLine($"connect: {res}");
+        if (res)
+        {
+            NavMgr.NavigateTo("/scan-page");   
+        }
     }
     async Task ScanNearby()
     {
