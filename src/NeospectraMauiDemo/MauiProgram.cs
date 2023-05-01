@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using NeospectraMauiDemo.Data;
 using Blazored.Toast;
+using BlazorBootstrap;
+
 namespace NeospectraMauiDemo
 {
     public static class MauiProgram
@@ -28,6 +30,7 @@ namespace NeospectraMauiDemo
                 });
 
             builder.Services.AddBlazoredToast();
+            builder.Services.AddBlazorBootstrap();
             builder.Services.AddSingleton<BluetoothLEService>();
 
             builder.Services.AddSingleton<IConnectivity>(Connectivity.Current);

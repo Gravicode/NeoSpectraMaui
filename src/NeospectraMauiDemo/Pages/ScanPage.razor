@@ -7,13 +7,112 @@
 
 <b>Spectrum</b>
 <p>@TxtSpectrum</p>
-<div>
-    <button class="btn btn-primary" @onclick="BackgroundScanClick" >Background Scan</button>
-    <button class="btn btn-success" @onclick="SensorScanClick" >Scan Material</button>
-    <button class="btn btn-warning" @onclick="ClearMemoryClick">Clear Memory</button>
-    <button class="btn btn-info" @onclick="InferenceClick" >Inference Test</button>
+<div class="row">
+    <div class="col-12">
+    <button class="btn btn-primary mr-2 mt-1" @onclick="BackgroundScanClick">Background Scan</button>
+    <button class="btn btn-success mr-2 mt-1" @onclick="SensorScanClick">Scan Material</button>
+    <button class="btn btn-warning mr-2 mt-1" @onclick="ClearMemoryClick">Clear Memory</button>
+    <button class="btn btn-info mr-2 mt-1" @onclick="InferenceClick">Inference Test</button>
+    </div>
 </div>
-<ConfirmDialog @ref="confirm1" ></ConfirmDialog>
+<LineChart @ref="lineChart" />
+<Grid TItem="UnsurModel" class="table table-hover table-bordered table-striped" DataProvider="ItemDataProvider" AllowFiltering="true" Responsive="true">
+    <GridColumn TItem="UnsurModel" HeaderText="Id" PropertyName="Id">
+        @context.Id
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="CreatedDate" PropertyName="CreatedDate">
+        @context.CreatedDate
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="Ca" PropertyName="Ca" >
+        @context.Ca
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="Na" PropertyName="Na">
+        @context.Na
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="KTK" PropertyName="KTK">
+        @context.KTK
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="Bray1_P2O5" PropertyName="Bray1_P2O5">
+        @context.Bray1_P2O5
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="CLAY" PropertyName="CLAY">
+        @context.CLAY
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="C_N" PropertyName="C_N">
+        @context.C_N
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="HCl25_K2O" PropertyName="HCl25_K2O">
+        @context.HCl25_K2O
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="HCl25_P2O5" PropertyName="HCl25_P2O5">
+        @context.HCl25_P2O5
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="Jumlah" PropertyName="Jumlah">
+        @context.Jumlah
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="K" PropertyName="K">
+        @context.K
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="KB_adjusted" PropertyName="KB_adjusted">
+        @context.KB_adjusted
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="KJELDAHL_N" PropertyName="KJELDAHL_N">
+        @context.KJELDAHL_N
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="Mg" PropertyName="Mg">
+        @context.Mg
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="Morgan_K2O" PropertyName="Morgan_K2O">
+        @context.Morgan_K2O
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="Olsen_P2O5" PropertyName="Olsen_P2O5">
+        @context.Olsen_P2O5
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="PH_H2O" PropertyName="PH_H2O">
+        @context.PH_H2O
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="PH_KCL" PropertyName="PH_KCL">
+        @context.PH_KCL
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="RetensiP" PropertyName="RetensiP">
+        @context.RetensiP
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="SAND" PropertyName="SAND">
+        @context.SAND
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="SILT" PropertyName="SILT">
+        @context.SILT
+    </GridColumn>
+    <GridColumn TItem="UnsurModel" HeaderText="WBC" PropertyName="WBC">
+        @context.WBC
+    </GridColumn>
+</Grid>
+<Grid TItem="FertilizerRecommendation" class="table table-hover table-bordered table-striped" DataProvider="FertilizerDataProvider" AllowFiltering="true" Responsive="true">
+    <GridColumn TItem="FertilizerRecommendation" HeaderText="Id" PropertyName="Id">
+        @context.Id
+    </GridColumn>
+   
+    <GridColumn TItem="FertilizerRecommendation" HeaderText="Komoditas" PropertyName="Komoditas">
+        @context.Komoditas
+    </GridColumn>
+    <GridColumn TItem="FertilizerRecommendation" HeaderText="NPK_15" PropertyName="NPK_15">
+        @context.NPK_15
+    </GridColumn>
+    <GridColumn TItem="FertilizerRecommendation" HeaderText="Urea_15" PropertyName="Urea_15">
+        @context.Urea_15
+    </GridColumn>
+    <GridColumn TItem="FertilizerRecommendation" HeaderText="KCL" PropertyName="KCL">
+        @context.KCL
+    </GridColumn>
+    <GridColumn TItem="FertilizerRecommendation" HeaderText="SP36" PropertyName="SP36">
+        @context.SP36
+    </GridColumn>
+    <GridColumn TItem="FertilizerRecommendation" HeaderText="Urea" PropertyName="Urea">
+        @context.Urea
+    </GridColumn>
+    </Grid>
+<ConfirmDialog @ref="confirm1"/>
+
 @code {
     ConfirmDialog confirm1;
     ObservableCollection<ChartItem> ChartItems = new ObservableCollection<ChartItem>();
@@ -26,7 +125,7 @@
     int backgroundScanTime = 2;
     IDevice bluetoothLeDevice = null;
     ScanPresenter scanPresenter = null;
-
+    private LineChart lineChart;
     bool isStopEnabled = false;
     bool isScanBG = false;
     bool isWaitingForBackGroundReading = false;
@@ -35,7 +134,16 @@
     double numberOfRuns = 1;
     int count = 1;
     private double maxValue = 0;
+    private Modal modal;
 
+    private async Task<GridDataProviderResult<UnsurModel>> ItemDataProvider(GridDataProviderRequest<UnsurModel> request)
+    {
+        return await Task.FromResult(request.ApplyTo(DataItems));
+    }
+    private async Task<GridDataProviderResult<FertilizerRecommendation>> FertilizerDataProvider(GridDataProviderRequest<FertilizerRecommendation> request)
+    {
+        return await Task.FromResult(request.ApplyTo(RecommendationItems));
+    }
     protected override async Task OnInitializedAsync()
     {
 
@@ -55,7 +163,10 @@
             GlobalVariables.bluetoothAPI.getmP3ConnectionServices().BroadcastReceived += ScanPage_BroadcastReceived;
         }
     }
-
+    private async Task OnHideModalClick()
+    {
+        await modal?.HideAsync();
+    }
     #region UI Code
 
 
@@ -79,8 +190,17 @@
     }
     async Task ShowDialog(string Message)
     {
-        confirm1.Message = Message;
-        await JS.InvokeVoidAsync("ShowModal", "confirmModal");
+        var confirmation = await confirm1.ShowAsync(
+           title: "Info",
+           message1: Message);
+        if (confirmation)
+        {
+            // do whatever
+        }
+        else
+        {
+            // do whatever
+        }
 
     }
 
@@ -168,7 +288,7 @@
                 break;
         }
     }
-    private void gotSensorReading(Dictionary<string, object> intent)
+    private async Task gotSensorReading(Dictionary<string, object> intent)
     {
         var TAG = nameof(ScanPage);
         bool isNotificationSuccessful = Convert.ToBoolean(intent["isNotificationSuccess"]);
@@ -207,7 +327,7 @@
 
                 isWaitingForBackGroundReading = false;
                 MethodsFactory.LogMessage(TAG, "BACKGROUND SCAN IS COMPLETE");
-                ShowDialog("BACKGROUND SCAN IS COMPLETE");
+                await ShowDialog("BACKGROUND SCAN IS COMPLETE");
 
             }
             return;
@@ -279,7 +399,7 @@
                 //Toast.makeText(mContext, "Scan is complete", Toast.LENGTH_LONG).show();
                 MethodsFactory.LogMessage(TAG, "SCAN IS COMPLETE");
 
-                ShowDialog("SCAN IS COMPLETE");
+                await ShowDialog("SCAN IS COMPLETE");
                 //do inference
                 DoInference();
                 CommonVariables.setScanningState(2);
@@ -415,7 +535,7 @@
         }
     }
 
-   
+
 
     public double[] getReflectance()
     {
@@ -448,7 +568,7 @@
                 scaler.createMonotoneCubicSpline(xData, yData);
                 /*
                 for (int ax = 2500; ax > 1350; ax -= 5)
-                {
+                    {
                     double x = ax;
                     double y = scaler.Interpolate(x);
                     Console.WriteLine(x + "," + y);
@@ -479,13 +599,51 @@
     #region chart
     async void ShowChart(List<Driver.DataPoint> datas)
     {
-        
-            ChartItems = new ObservableCollection<ChartItem>();
-            foreach (var item in datas)
+
+        ChartItems = new ObservableCollection<ChartItem>();
+        foreach (var item in datas)
+        {
+            ChartItems.Add(new ChartItem() { Ax = item.X.ToString(), Ay = item.Y });
+        }
+        var data = new ChartData
             {
-                ChartItems.Add(new ChartItem() { Ax = item.X.ToString(), Ay = item.Y });
-            }
-            /*
+                Labels = ChartItems.Select(x => x.Ax.ToString()).ToList(), //new List<string> { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20" },
+                Datasets = new List<IChartDataset>()
+                {
+                    new LineChartDataset()
+                    {
+                        Label = "Spectrum",
+                        Data = ChartItems.Select(x => x.Ay).ToList(),//new List<double>{ 9, 20, 29, 33, 50, 66, 75, 86, 91, 105, 120, 126, 141, 150, 156, 164, 177, 180, 184, 195 },
+                        BackgroundColor = new List<string>{ "rgb(88, 80, 141)" },
+                        BorderColor = new List<string>{ "rgb(88, 80, 141)" },
+                        BorderWidth = new List<double>{2},
+                        HoverBorderWidth = new List<double>{4},
+                        PointBackgroundColor = new List<string>{ "rgb(88, 80, 141)" },
+                        PointBorderColor = new List<string>{ "rgb(88, 80, 141)" },
+                        PointRadius = new List<int>{0}, // hide points
+                        PointHoverRadius = new List<int>{4},
+                    }
+                }
+            };
+
+        var options = new LineChartOptions();
+
+        options.Interaction.Mode = InteractionMode.Index;
+
+        options.Plugins.Title.Text = "Material Scanned Spectrum";
+        options.Plugins.Title.Display = true;
+        options.Plugins.Title.Font.Size = 20;
+
+        options.Responsive = true;
+
+        options.Scales.X.Title.Text = "Spectrum";
+        options.Scales.X.Title.Display = true;
+
+        options.Scales.Y.Title.Text = "Absorbance";
+        options.Scales.Y.Title.Display = true;
+
+        await lineChart.UpdateAsync(data, options);
+        /*
             var series1 = (LineSeries)LineChart1.Series[0];
             series1.ItemsSource = ChartItems;
             series1.DependentRangeAxis =
