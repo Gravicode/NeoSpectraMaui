@@ -138,7 +138,7 @@
 
     }
 
-    private void ScanPage_BroadcastReceived(object sender, SWS_P3ConnectionServices.BroadcastEventArgs e)
+    private async void ScanPage_BroadcastReceived(object sender, SWS_P3ConnectionServices.BroadcastEventArgs e)
     {
         var TAG = nameof(ScanPage);
         var intent = e.iGotData;
@@ -176,8 +176,10 @@
                 isWaitingForSelfCorrection = false;
                 isWaitingForRestoreToDefault = false;
                 isWaitingForStoringAllSettings = false;
-
-                ShowDialog("Error " + (0x000000FF & errorCode) + " occurred during measurement!");
+                await InvokeAsync(async () =>
+                {
+                    await ShowDialog("Error " + (0x000000FF & errorCode) + " occurred during measurement!");
+                });
                 enableView();
                 // show progress bar
 
@@ -202,14 +204,20 @@
                 break;
 
             case "OperationDone":
-                ShowDialog("Preferences has been saved on the scanner successfully.");
+                await InvokeAsync(async () =>
+                {
+                    await ShowDialog("Preferences has been saved on the scanner successfully.");
+                });
                 enableView();
                 break;
             case "Error":
                 errorCode = Convert.ToInt32(intent["data"]);
-                ShowDialog(
-                        "Error " + (0x000000FF & errorCode) +
-                                " occurred during measurement!");
+                await InvokeAsync(async () =>
+             {
+                 await ShowDialog(
+                     "Error " + (0x000000FF & errorCode) +
+                             " occurred during measurement!");
+             });
                 enableView();
                 break;
 
@@ -219,7 +227,7 @@
                 break;
         }
     }
-    private void gotSensorReading(Dictionary<string, object> intent)
+    private async void gotSensorReading(Dictionary<string, object> intent)
     {
         var TAG = nameof(ScanPage);
         bool isNotificationSuccessful = Convert.ToBoolean(intent["isNotificationSuccess"]);
@@ -261,7 +269,10 @@
             else if (isWaitingForRestoreToDefault)
             {
                 MethodsFactory.LogMessage("RestoreToDefault", "Settings has been restored successfully.");
-                ShowDialog("Restore To Default - Settings has been restored successfully.");
+                await InvokeAsync(async () =>
+                {
+                    await ShowDialog("Restore To Default - Settings has been restored successfully.");
+                });
 
                 enableView();
                 isWaitingForRestoreToDefault = false;
@@ -269,7 +280,10 @@
             else if (isWaitingForStoringAllSettings && ((notifications_count % 2) == 0))
             {
                 MethodsFactory.LogMessage("StoringAllSettings", "Settings has been stored successfully.");
-                ShowDialog("Storing All Settings - Settings has been stored successfully.");
+                await InvokeAsync(async () =>
+                {
+                    await ShowDialog("Storing All Settings - Settings has been stored successfully.");
+                });
 
                 enableView();
                 isWaitingForStoringAllSettings = false;
@@ -393,7 +407,7 @@
             "Are you sure you would like to proceed?");
         if(res)
         {
-        askForRestoreToDefaultSettings();
+          askForRestoreToDefaultSettings();
         }
         else
         {
@@ -476,7 +490,7 @@
     }
 
     // Request command of selfCorrection from scanner
-    private void askForSelfCorrection()
+    private async Task askForSelfCorrection()
     {
         if (scanPresenter == null)
         {
@@ -485,7 +499,7 @@
         // Don't complete the process if the device not connected
         if (GlobalVariables.bluetoothAPI == null || !GlobalVariables.bluetoothAPI.isDeviceConnected())
         {
-            ShowDialog(
+            await ShowDialog(
                     "Please! Ensure that you have a connected device firstly");
 
             return;
@@ -495,7 +509,7 @@
     }
 
     // Request restore to default settings from scanner
-    private void askForRestoreToDefaultSettings()
+    private async Task askForRestoreToDefaultSettings()
     {
         if (scanPresenter == null)
         {
@@ -504,7 +518,7 @@
         // Don't complete the process if the device not connected
         if (GlobalVariables.bluetoothAPI == null || !GlobalVariables.bluetoothAPI.isDeviceConnected())
         {
-            ShowDialog("Please! Ensure that you have a connected device firstly");
+            await ShowDialog("Please! Ensure that you have a connected device firstly");
             return;
         }
 
@@ -514,7 +528,7 @@
     }
 
     // Request to sore all setting in the scanner
-    private void askForStoringAllSettings()
+    private async Task askForStoringAllSettings()
     {
         if (scanPresenter == null)
         {
@@ -523,7 +537,7 @@
         // Don't complete the process if the device not connected
         if (GlobalVariables.bluetoothAPI == null || !GlobalVariables.bluetoothAPI.isDeviceConnected())
         {
-            ShowDialog("Please! Ensure that you have a connected device firstly");
+            await ShowDialog("Please! Ensure that you have a connected device firstly");
 
             return;
         }
@@ -782,7 +796,7 @@
 
         if (GlobalVariables.bluetoothAPI != null)
         {
-            GlobalVariables.bluetoothAPI.sendPacket(memPreferencePacket, false, "Memory Service");
+            var res = GlobalVariables.bluetoothAPI.sendPacket(memPreferencePacket, false, "Memory Service");
 
             // Save a setting locally on the device
 
@@ -793,7 +807,11 @@
             Preferences.Set("data_points", interpolation_points);
             Preferences.Set("apodization_function", apodization_value);
             Preferences.Set("fft_points", FFT_points);
-            Toast.ShowInfo("Saved");
+            //if(res)
+            //    Toast.ShowInfo("Saved");
+            //    else
+            //    Toast.ShowInfo("Failed, ensure your device is connected.");
+
         }
     }
     async void SaveClick()

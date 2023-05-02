@@ -141,7 +141,7 @@ namespace NeospectraMauiDemo.Model
                 if (inputFloat != null && inputFloat.Count == 154)
                 {
                     var inputF = PreProcessData(inputFloat);
-                    //await DoInference2(CurrentIndex, inputF);
+                    await DoInference2(CurrentIndex, inputF);
                 }
                 output.AcceptChanges();
                 return true;

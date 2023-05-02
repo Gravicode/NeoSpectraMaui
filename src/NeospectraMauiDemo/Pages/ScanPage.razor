@@ -16,7 +16,7 @@
     </div>
 </div>
 <LineChart @ref="lineChart" />
-<Grid TItem="UnsurModel" class="table table-hover table-bordered table-striped" DataProvider="ItemDataProvider" AllowFiltering="true" Responsive="true">
+<Grid @ref="GridUnsur" TItem="UnsurModel" class="table table-hover table-bordered table-striped" DataProvider="ItemDataProvider" AllowFiltering="true" Responsive="true">
     <GridColumn TItem="UnsurModel" HeaderText="Id" PropertyName="Id">
         @context.Id
     </GridColumn>
@@ -87,7 +87,7 @@
         @context.WBC
     </GridColumn>
 </Grid>
-<Grid TItem="FertilizerRecommendation" class="table table-hover table-bordered table-striped" DataProvider="FertilizerDataProvider" AllowFiltering="true" Responsive="true">
+<Grid @ref="GridRecom" TItem="FertilizerRecommendation" class="table table-hover table-bordered table-striped" DataProvider="FertilizerDataProvider" AllowFiltering="true" Responsive="true">
     <GridColumn TItem="FertilizerRecommendation" HeaderText="Id" PropertyName="Id">
         @context.Id
     </GridColumn>
@@ -114,6 +114,8 @@
 <ConfirmDialog @ref="confirm1"/>
 
 @code {
+    Grid<UnsurModel> GridUnsur;
+    Grid<FertilizerRecommendation> GridRecom;
     ConfirmDialog confirm1;
     ObservableCollection<ChartItem> ChartItems = new ObservableCollection<ChartItem>();
     ObservableCollection<UnsurModel> DataItems = new ObservableCollection<UnsurModel>();
@@ -156,7 +158,7 @@
 
         }
         if (engine == null) engine = new SSKEngine();
-        LoadData();
+        await LoadData();
         TxtSpectrum = $"Spectral Length ({SSKEngine.WaveFreq.First()} nm - {SSKEngine.WaveFreq.Last()} nm)";
         if (GlobalVariables.bluetoothAPI != null)
         {
@@ -170,7 +172,7 @@
     #region UI Code
 
 
-    void LoadData()
+    async Task LoadData()
     {
         DataItems.Clear();
         var items = engine.GetOutput();
@@ -179,13 +181,16 @@
             DataItems.Add(x);
         });
         //dataGrid.ItemsSource = DataItems;
-
+        if(GridUnsur!=null)
+            await GridUnsur.RefreshDataAsync();
         RecommendationItems.Clear();
         var items2 = engine.GetRecommendations();
         items2.ForEach(x =>
         {
             RecommendationItems.Add(x);
         });
+        if (GridRecom != null)
+        await GridRecom.RefreshDataAsync();
         //dataGrid2.ItemsSource = RecommendationItems;
     }
     async Task ShowDialog(string Message)
@@ -329,7 +334,8 @@
                 MethodsFactory.LogMessage(TAG, "BACKGROUND SCAN IS COMPLETE");
                 await InvokeAsync(async () =>
                 {
-                await ShowDialog("BACKGROUND SCAN IS COMPLETE");
+                    Toast.ShowInfo("BACKGROUND SCAN IS COMPLETE");
+                //await ShowDialog("BACKGROUND SCAN IS COMPLETE");
                 //StateHasChanged());
                });
 
@@ -405,7 +411,8 @@
                 MethodsFactory.LogMessage(TAG, "SCAN IS COMPLETE");
                 await InvokeAsync(async () =>
                 {
-                    await ShowDialog("SCAN IS COMPLETE");
+                    Toast.ShowInfo("SCAN IS COMPLETE");
+                    //await ShowDialog("SCAN IS COMPLETE");
                     //StateHasChanged());
                 });
                
@@ -436,7 +443,7 @@
         //UI code here
 
 
-        LoadData();
+        await LoadData();
 
 
 

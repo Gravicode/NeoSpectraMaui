@@ -5,46 +5,47 @@
 @{
     var counter = 1;
 }
-<table class="table table-hovered table-bordered">
-    <thead>
-        <tr>
-            <th scope="col">#</th>
-            <th scope="col">Name</th>
-            <th scope="col">ID</th>
-            <th scope="col">Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if(VM.DeviceCandidates!=null)
-        @foreach (var device in VM.DeviceCandidates)
-        {
+<div class="table-responsive">
+    <table class="table table-hovered table-bordered">
+        <thead>
             <tr>
-                <th scope="row">@counter++</th>
-                <td>@device.Name</td>
-                <td>@device.Id</td>
-                <td><button class="btn btn-primary" @onclick="()=>Connect(device)">Connect</button></td>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col">ID</th>
+                <th scope="col">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (VM.DeviceCandidates != null)
+                @foreach (var device in VM.DeviceCandidates)
+                {
+                    <tr>
+                        <th scope="row">@counter++</th>
+                        <td>@device.Name</td>
+                        <td>@device.Id</td>
+                        <td><button class="btn btn-primary" @onclick="()=>Connect(device)">Connect</button></td>
+                    </tr>
+                }
+
+            else
+            {
+                <tr>
+                    <td colspan="4">No Device</td>
                 </tr>
             }
 
-        else
-        {
-            <tr>
-                <td colspan="4">No Device</td>
-            </tr>
-        }
-
-    </tbody>
-</table>
-
+        </tbody>
+    </table>
+</div>
 <button class="btn btn-primary" @onclick="ScanNearby" disabled="@VM.IsScanning">Scan Nearby Device</button>
 <button class="btn btn-success" @onclick="CheckBle" disabled="@VM.IsScanning">Check Bluetooth</button>
-@code{
+@code {
     async Task Connect(DeviceCandidate device)
     {
         var res = await VM.ConnectToDevice(device);
         if (res)
         {
-            NavMgr.NavigateTo("/scan-page");   
+            NavMgr.NavigateTo("/scan-page");
         }
     }
     async Task ScanNearby()
