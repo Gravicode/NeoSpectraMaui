@@ -25,14 +25,18 @@ namespace NeospectraMauiDemo.Driver
         {
 
             GlobalVariables.bluetoothAPI?.setSourceSettings();
+            //Thread.Sleep(500);
             GlobalVariables.bluetoothAPI?.setOpticalSettings();
+            //Thread.Sleep(500);
             GlobalVariables.bluetoothAPI?.sendDefaultPacket(scanTime);
         }
 
         public void requestBackgroundReading(int scanTime)
         {
             GlobalVariables.bluetoothAPI?.setSourceSettings();
+            //Thread.Sleep(500);
             GlobalVariables.bluetoothAPI?.setOpticalSettings();
+            //Thread.Sleep(500);
             GlobalVariables.bluetoothAPI?.sendBackgroundPacket(scanTime);
         }
 
